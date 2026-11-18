@@ -872,6 +872,7 @@ async function build(index) {
 // ターン終了
 // ======================================
 
+
 async function endTurn() {
 
     if (!isMyTurn()) return;
@@ -886,7 +887,7 @@ async function endTurn() {
     next.built = false;
     next.dice = null;
 
-    addLog(
+    next.log.unshift(
         next.players[next.current].name +
         " のターンです。"
     );
@@ -900,6 +901,7 @@ async function endTurn() {
         alert(error.message);
     }
 }
+
 
 // ======================================
 // 画面描画

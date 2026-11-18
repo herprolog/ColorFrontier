@@ -1,0 +1,1090 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>COLOR FRONTIER</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+:root {
+    --bg: #101522;
+    --panel: #1b2435;
+    --panel2: #253149;
+    --text: #f1f5f9;
+    --muted: #9caac0;
+    --accent: #65d6c2;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: Arial, "Noto Sans JP", sans-serif;
+}
+
+button, input {
+    font: inherit;
+}
+
+button {
+    cursor: pointer;
+}
+
+header {
+    padding: 18px;
+    text-align: center;
+    border-bottom: 1px solid #344056;
+}
+
+header h1 {
+    margin: 0;
+    letter-spacing: 3px;
+    color: var(--accent);
+    font-size: 25px;
+}
+
+header p {
+    margin: 6px 0 0;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+main {
+    max-width: 1100px;
+    margin: auto;
+    padding: 18px;
+}
+
+.panel {
+    background: var(--panel);
+    border: 1px solid #344056;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+h2 {
+    font-size: 17px;
+    margin: 0 0 14px;
+}
+
+input {
+    width: 100%;
+    background: #111a29;
+    border: 1px solid #43516b;
+    color: white;
+    border-radius: 7px;
+    padding: 12px;
+    margin-bottom: 10px;
+}
+
+button {
+    background: var(--accent);
+    color: #10232a;
+    border: 0;
+    border-radius: 7px;
+    padding: 11px 16px;
+    font-weight: bold;
+}
+
+button:disabled {
+    opacity: .35;
+    cursor: not-allowed;
+}
+
+.secondary {
+    background: var(--panel2);
+    color: white;
+    border: 1px solid #465571;
+}
+
+.actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.hidden {
+    display: none !important;
+}
+
+#roomInfo {
+    color: var(--accent);
+    font-weight: bold;
+    font-size: 20px;
+    letter-spacing: 3px;
+}
+
+.players {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+}
+
+.player {
+    background: #111a29;
+    padding: 12px;
+    border-radius: 8px;
+    border: 2px solid transparent;
+    min-width: 0;
+}
+
+.player.active {
+    border-color: var(--accent);
+}
+
+.player-name {
+    font-weight: bold;
+    overflow-wrap: anywhere;
+}
+
+.player-score {
+    color: var(--muted);
+    font-size: 13px;
+    margin-top: 5px;
+}
+
+.player-color {
+    display: inline-block;
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    margin-right: 5px;
+}
+
+.hand {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 9px;
+    margin-top: 10px;
+}
+
+.token {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: #111a29;
+    border-radius: 20px;
+    padding: 5px 9px;
+    font-size: 13px;
+}
+
+.token-dot {
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+}
+
+#board {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 7px;
+    max-width: 650px;
+    margin: auto;
+}
+
+.tile {
+    aspect-ratio: 1;
+    min-width: 0;
+    position: relative;
+    border: 2px solid rgba(255,255,255,.12);
+    border-radius: 12px;
+    color: #101522;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    transition: .15s;
+    padding: 3px;
+}
+
+.tile:not(:disabled):hover {
+    transform: scale(1.04);
+    border-color: white;
+}
+
+.tile-number {
+    font-size: clamp(15px, 3vw, 23px);
+    font-weight: 900;
+}
+
+.tile-owner {
+    font-size: 11px;
+    margin-top: 3px;
+    font-weight: bold;
+}
+
+.tile.empty {
+    opacity: .9;
+}
+
+.tile.mine {
+    border: 3px solid white;
+}
+
+#dice {
+    font-size: 35px;
+    font-weight: bold;
+    color: var(--accent);
+    margin: 10px 0;
+}
+
+#message {
+    color: var(--muted);
+    line-height: 1.7;
+    min-height: 25px;
+}
+
+#log {
+    max-height: 150px;
+    overflow-y: auto;
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.8;
+}
+
+.status {
+    color: var(--accent);
+    font-weight: bold;
+}
+
+@media(max-width:600px) {
+    main {
+        padding: 10px;
+    }
+
+    .players {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    #board {
+        gap: 4px;
+    }
+
+    .tile {
+        border-radius: 7px;
+    }
+
+    .tile-owner {
+        font-size: 9px;
+    }
+
+    .panel {
+        padding: 12px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>COLOR FRONTIER</h1>
+    <p>BUILD YOUR OWN FRONTIER</p>
+</header>
+
+<main>
+
+    <!-- 接続設定 -->
+    <section id="setup" class="panel">
+        <h2>オンライン対戦</h2>
+
+        <input
+            id="playerName"
+            maxlength="12"
+            placeholder="プレイヤー名"
+        >
+
+        <div class="actions">
+            <button onclick="createRoom()">ルームを作成</button>
+        </div>
+
+        <hr style="border-color:#344056;margin:18px 0">
+
+        <input
+            id="roomCodeInput"
+            maxlength="6"
+            placeholder="参加コード（6文字）"
+        >
+
+        <button class="secondary" onclick="joinRoom()">
+            ルームに参加
+        </button>
+
+        <p id="setupMessage"></p>
+    </section>
+
+    <!-- ゲーム画面 -->
+    <section id="game" class="hidden">
+
+        <div class="panel">
+            <h2>ルーム情報</h2>
+            <div id="roomInfo"></div>
+            <p style="color:var(--muted);font-size:12px">
+                このコードを友人に共有してください。
+            </p>
+            <p id="connectionStatus" class="status">
+                接続中
+            </p>
+        </div>
+
+        <div class="panel">
+            <h2>プレイヤー</h2>
+            <div id="players" class="players"></div>
+        </div>
+
+        <div class="panel">
+            <h2>現在の状況</h2>
+            <div id="turnInfo"></div>
+            <div id="dice">--</div>
+            <div id="message"></div>
+
+            <div class="actions">
+                <button id="rollButton" onclick="rollDice()">
+                    サイコロを振る
+                </button>
+
+                <button
+                    id="endButton"
+                    class="secondary"
+                    onclick="endTurn()"
+                >
+                    ターン終了
+                </button>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>保有カラー</h2>
+            <div id="hand" class="hand"></div>
+        </div>
+
+        <div class="panel">
+            <h2>フィールド</h2>
+            <p style="font-size:12px;color:var(--muted)">
+                サイコロの結果に応じて色を獲得できます。
+                3個の色を消費すると、隣接する空きマスに
+                自分の拠点を配置できます。
+            </p>
+            <div id="board"></div>
+        </div>
+
+        <div class="panel">
+            <h2>ゲームログ</h2>
+            <div id="log"></div>
+        </div>
+
+        <div class="actions">
+            <button class="secondary" onclick="location.reload()">
+                接続を終了
+            </button>
+        </div>
+
+    </section>
+
+</main>
+
+<script>
+
+// ======================================
+// Supabase設定
+// ======================================
+
+const SUPABASE_URL = "ここにProject URL";
+const SUPABASE_KEY = "ここにPublishable key";
+
+let db = null;
+let channel = null;
+let roomCode = null;
+let state = null;
+
+const playerId = (() => {
+    let id = localStorage.getItem("cf_player_id");
+
+    if (!id) {
+        id = crypto.randomUUID();
+        localStorage.setItem("cf_player_id", id);
+    }
+
+    return id;
+})();
+
+// ======================================
+// カラー設定
+// ======================================
+
+const COLORS = [
+    "#ef5350",
+    "#42a5f5",
+    "#ffca28",
+    "#66bb6a",
+    "#ab78e8",
+    "#ff8a45"
+];
+
+const PLAYER_COLORS = [
+    "#ef5350",
+    "#42a5f5",
+    "#ffca28",
+    "#66bb6a"
+];
+
+function randomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function shuffle(array) {
+    return array.sort(() => Math.random() - 0.5);
+}
+
+function createBoard() {
+    const colors = shuffle(
+        Array.from({length:25}, (_,i) => i % 6)
+    );
+
+    return Array.from({length:25}, (_,i) => ({
+        color: colors[i],
+        number: randomInt(2,12),
+        owner: null
+    }));
+}
+
+// ======================================
+// 初期状態
+// ======================================
+
+function createInitialState(name) {
+
+    return {
+        players: [{
+            id: playerId,
+            name: name,
+            color: 0,
+            tokens: [1,1,1,0,0,0],
+            score: 0
+        }],
+
+        board: createBoard(),
+
+        current: 0,
+        dice: null,
+        rolled: false,
+        built: false,
+        winner: null,
+        log: ["ゲームが作成されました。"]
+    };
+}
+
+// ======================================
+// Supabase接続
+// ======================================
+
+function connectDB() {
+
+    if (
+        SUPABASE_URL.includes("ここに") ||
+        SUPABASE_KEY.includes("ここに")
+    ) {
+        throw new Error("Supabaseの設定が未完了です。");
+    }
+
+    if (!db) {
+        db = window.supabase.createClient(
+            SUPABASE_URL,
+            SUPABASE_KEY
+        );
+    }
+}
+
+// ======================================
+// 共通処理
+// ======================================
+
+function getName() {
+    const name = document
+        .getElementById("playerName")
+        .value.trim();
+
+    if (!name) {
+        throw new Error("プレイヤー名を入力してください。");
+    }
+
+    return name;
+}
+
+function getMyIndex() {
+    return state.players.findIndex(
+        p => p.id === playerId
+    );
+}
+
+function isMyTurn() {
+    return (
+        state &&
+        state.players[state.current]?.id === playerId
+    );
+}
+
+function addLog(message) {
+    state.log.unshift(message);
+    state.log = state.log.slice(0,30);
+}
+
+function showSetupMessage(message) {
+    document.getElementById("setupMessage").textContent = message;
+}
+
+// ======================================
+// ルーム作成
+// ======================================
+
+function generateCode() {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+    return Array.from(
+        {length:6},
+        () => chars[randomInt(0,chars.length-1)]
+    ).join("");
+}
+
+async function createRoom() {
+
+    try {
+        connectDB();
+
+        const name = getName();
+        roomCode = generateCode();
+        state = createInitialState(name);
+
+        const {error} = await db
+            .from("rooms")
+            .insert({
+                code: roomCode,
+                state: state
+            });
+
+        if (error) throw error;
+
+        localStorage.setItem("cf_room",roomCode);
+
+        await enterGame();
+
+    } catch(error) {
+        showSetupMessage(error.message);
+    }
+}
+
+// ======================================
+// ルーム参加
+// ======================================
+
+async function joinRoom() {
+
+    try {
+        connectDB();
+
+        const name = getName();
+
+        roomCode = document
+            .getElementById("roomCodeInput")
+            .value.trim()
+            .toUpperCase();
+
+        if (!/^[A-Z0-9]{6}$/.test(roomCode)) {
+            throw new Error("参加コードは6文字で入力してください。");
+        }
+
+        const {data,error} = await db
+            .from("rooms")
+            .select("state")
+            .eq("code",roomCode)
+            .single();
+
+        if (error) throw error;
+
+        state = data.state;
+
+        const existing = state.players.find(
+            p => p.id === playerId
+        );
+
+        if (!existing) {
+
+            if (state.players.length >= 4) {
+                throw new Error("このルームは満員です。");
+            }
+
+            if (state.winner !== null) {
+                throw new Error("このゲームは終了しています。");
+            }
+
+            state.players.push({
+                id: playerId,
+                name: name,
+                color: state.players.length,
+                tokens: [1,1,1,0,0,0],
+                score: 0
+            });
+
+            addLog(name + " が参加しました。");
+
+            await saveState();
+
+        }
+
+        localStorage.setItem("cf_room",roomCode);
+
+        await enterGame();
+
+    } catch(error) {
+        showSetupMessage(error.message);
+    }
+}
+
+// ======================================
+// ゲーム開始・同期
+// ======================================
+
+async function enterGame() {
+
+    document.getElementById("setup").classList.add("hidden");
+    document.getElementById("game").classList.remove("hidden");
+
+    document.getElementById("roomInfo").textContent = roomCode;
+
+    channel = db
+        .channel("room-" + roomCode)
+        .on(
+            "postgres_changes",
+            {
+                event: "UPDATE",
+                schema: "public",
+                table: "rooms",
+                filter: "code=eq." + roomCode
+            },
+            payload => {
+                state = payload.new.state;
+                render();
+            }
+        )
+        .subscribe(status => {
+            document.getElementById("connectionStatus").textContent =
+                status === "SUBSCRIBED"
+                    ? "● オンライン"
+                    : "● 接続中...";
+        });
+
+    render();
+}
+
+async function saveState() {
+
+    const {error} = await db
+        .from("rooms")
+        .update({
+            state: state,
+            updated_at: new Date().toISOString()
+        })
+        .eq("code",roomCode);
+
+    if (error) throw error;
+}
+
+// ======================================
+// サイコロ
+// ======================================
+
+async function rollDice() {
+
+    if (!isMyTurn()) return;
+    if (state.rolled || state.winner !== null) return;
+    if (state.players.length < 2) {
+        alert("2人以上で開始できます。");
+        return;
+    }
+
+    const next = structuredClone(state);
+
+    const d1 = randomInt(1,6);
+    const d2 = randomInt(1,6);
+    const total = d1 + d2;
+
+    next.dice = [d1,d2];
+    next.rolled = true;
+
+    let produced = 0;
+
+    if (total !== 7) {
+
+        next.board.forEach(tile => {
+
+            if (
+                tile.number === total &&
+                tile.owner !== null
+            ) {
+
+                const owner = next.players[tile.owner];
+
+                if (owner) {
+                    owner.tokens[tile.color]++;
+                    produced++;
+                }
+
+            }
+
+        });
+
+    }
+
+    next.log.unshift(
+        next.players[next.current].name +
+        " が " + d1 + " + " + d2 +
+        " = " + total + " を出しました。"
+    );
+
+    next.log.unshift(
+        total === 7
+            ? "今回は獲得なし。"
+            : produced + " 個の獲得が発生しました。"
+    );
+
+    state = next;
+
+    try {
+        await saveState();
+        render();
+    } catch(error) {
+        alert(error.message);
+    }
+}
+
+// ======================================
+// 建設条件
+// ======================================
+
+function totalTokens(player) {
+    return player.tokens.reduce((a,b) => a+b,0);
+}
+
+function getNeighbors(index) {
+
+    const row = Math.floor(index/5);
+    const col = index%5;
+
+    const result = [];
+
+    if (row > 0) result.push(index-5);
+    if (row < 4) result.push(index+5);
+    if (col > 0) result.push(index-1);
+    if (col < 4) result.push(index+1);
+
+    return result;
+}
+
+function canBuild(index) {
+
+    if (!isMyTurn()) return false;
+    if (!state.rolled || state.built) return false;
+    if (state.winner !== null) return false;
+
+    const me = getMyIndex();
+    const player = state.players[me];
+    const tile = state.board[index];
+
+    if (tile.owner !== null) return false;
+    if (totalTokens(player) < 3) return false;
+
+    const hasTerritory = state.board.some(
+        t => t.owner === me
+    );
+
+    if (!hasTerritory) return true;
+
+    return getNeighbors(index).some(
+        n => state.board[n].owner === me
+    );
+}
+
+// ======================================
+// 拠点配置
+// ======================================
+
+async function build(index) {
+
+    if (!canBuild(index)) return;
+
+    const next = structuredClone(state);
+
+    const me = next.current;
+    const player = next.players[me];
+
+    let remaining = 3;
+
+    // 色の区別は保ち、3個を消費
+    for (let i=0;i<6;i++) {
+
+        const amount = Math.min(
+            player.tokens[i],
+            remaining
+        );
+
+        player.tokens[i] -= amount;
+        remaining -= amount;
+
+        if (remaining === 0) break;
+    }
+
+    next.board[index].owner = me;
+    player.score++;
+    next.built = true;
+
+    next.log.unshift(
+        player.name + " がフィールド " +
+        (index+1) + " に拠点を配置しました。"
+    );
+
+    if (player.score >= 7) {
+        next.winner = me;
+
+        next.log.unshift(
+            player.name + " の勝利です！"
+        );
+    }
+
+    state = next;
+
+    try {
+        await saveState();
+        render();
+    } catch(error) {
+        alert(error.message);
+    }
+}
+
+// ======================================
+// ターン終了
+// ======================================
+
+async function endTurn() {
+
+    if (!isMyTurn()) return;
+    if (!state.rolled || state.winner !== null) return;
+
+    const next = structuredClone(state);
+
+    next.current =
+        (next.current + 1) % next.players.length;
+
+    next.rolled = false;
+    next.built = false;
+    next.dice = null;
+
+    addLog(
+        next.players[next.current].name +
+        " のターンです。"
+    );
+
+    state = next;
+
+    try {
+        await saveState();
+        render();
+    } catch(error) {
+        alert(error.message);
+    }
+}
+
+// ======================================
+// 画面描画
+// ======================================
+
+function render() {
+
+    if (!state) return;
+
+    renderPlayers();
+    renderHand();
+    renderBoard();
+    renderStatus();
+    renderLog();
+
+}
+
+function renderPlayers() {
+
+    const container = document.getElementById("players");
+
+    container.innerHTML = "";
+
+    state.players.forEach((p,index) => {
+
+        const div = document.createElement("div");
+
+        div.className =
+            "player" +
+            (index === state.current ? " active" : "");
+
+        const dot = document.createElement("span");
+        dot.className = "player-color";
+        dot.style.background = PLAYER_COLORS[p.color];
+
+        const name = document.createElement("span");
+        name.className = "player-name";
+        name.textContent = p.name;
+
+        const score = document.createElement("div");
+        score.className = "player-score";
+        score.textContent = "ポイント：" + p.score;
+
+        div.append(dot,name,score);
+        container.appendChild(div);
+
+    });
+
+}
+
+function renderHand() {
+
+    const container = document.getElementById("hand");
+    container.innerHTML = "";
+
+    const me = getMyIndex();
+
+    if (me < 0) return;
+
+    state.players[me].tokens.forEach((amount,index) => {
+
+        const div = document.createElement("div");
+        div.className = "token";
+
+        const dot = document.createElement("span");
+        dot.className = "token-dot";
+        dot.style.background = COLORS[index];
+
+        const count = document.createElement("span");
+        count.textContent = amount;
+
+        div.append(dot,count);
+        container.appendChild(div);
+
+    });
+
+}
+
+function renderBoard() {
+
+    const container = document.getElementById("board");
+    container.innerHTML = "";
+
+    state.board.forEach((tile,index) => {
+
+        const button = document.createElement("button");
+
+        button.className =
+            "tile" +
+            (tile.owner === null ? " empty" : "") +
+            (tile.owner === getMyIndex() ? " mine" : "");
+
+        button.style.background = COLORS[tile.color];
+
+        const number = document.createElement("span");
+        number.className = "tile-number";
+        number.textContent = tile.number;
+
+        const owner = document.createElement("span");
+        owner.className = "tile-owner";
+
+        owner.textContent =
+            tile.owner === null
+                ? "＋"
+                : state.players[tile.owner].name;
+
+        button.append(number,owner);
+
+        button.disabled = !canBuild(index);
+
+        button.onclick = () => build(index);
+
+        container.appendChild(button);
+
+    });
+
+}
+
+function renderStatus() {
+
+    const current = state.players[state.current];
+
+    document.getElementById("turnInfo").textContent =
+        state.winner !== null
+            ? "ゲーム終了"
+            : "現在のターン：" + current.name;
+
+    document.getElementById("dice").textContent =
+        state.dice
+            ? state.dice[0] + " + " +
+              state.dice[1] + " = " +
+              (state.dice[0]+state.dice[1])
+            : "--";
+
+    let message = "";
+
+    if (state.winner !== null) {
+        message =
+            "🏆 " + state.players[state.winner].name +
+            " の勝利です！";
+    } else if (!isMyTurn()) {
+        message = current.name + " の行動を待っています。";
+    } else if (state.players.length < 2) {
+        message = "他のプレイヤーの参加を待っています。";
+    } else if (!state.rolled) {
+        message = "サイコロを振ってください。";
+    } else if (state.built) {
+        message = "配置完了。ターンを終了してください。";
+    } else {
+        message = "配置可能なマスを選択してください。";
+    }
+
+    document.getElementById("message").textContent = message;
+
+    document.getElementById("rollButton").disabled =
+        !isMyTurn() ||
+        state.rolled ||
+        state.winner !== null ||
+        state.players.length < 2;
+
+    document.getElementById("endButton").disabled =
+        !isMyTurn() ||
+        !state.rolled ||
+        state.winner !== null;
+
+}
+
+function renderLog() {
+
+    const container = document.getElementById("log");
+
+    container.innerHTML = "";
+
+    state.log.forEach(item => {
+
+        const div = document.createElement("div");
+        div.textContent = "・" + item;
+
+        container.appendChild(div);
+
+    });
+
+}
+
+</script>
+
+</body>
+</html>
